@@ -1,5 +1,14 @@
 # Changelog
 
+## 2.0.0 - 2026-08-15
+
+- 为 Windows 10/11 重新实现 Electron、React 与 TypeScript 桌面应用，同时保留上游 macOS 源码作为行为参照。
+- 随包附带 OpenAI 官方 Codex CLI 0.147.0，绕过 Microsoft Store MSIX 内部可执行文件无法由外部程序启动的问题。
+- 接入真实 Codex App Server，提供 Skills、Hooks、Memory、用量、MCP、存储、GitHub 备份、变更记录与系统自检界面。
+- 增加 Windows 标题栏、托盘、深浅色主题、NSIS 安装包和 portable 可执行文件。
+- 增加渲染器沙箱、严格 IPC 白名单、配置版本写入、路径与符号链接检查、敏感信息脱敏、清理指纹和失败回滚。
+- 增加 Windows CI、真实协议探针、单元测试与 SHA-256 产物。
+
 ## 1.3.0 - 2026-07-16
 
 - 增加公开开发路线，说明近期优先级、后续方向和明确不做的事项。

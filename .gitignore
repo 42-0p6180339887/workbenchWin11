@@ -6,3 +6,11 @@ dist/
 *.xcuserstate
 xcuserdata/
 SkillLens.xcodeproj/project.xcworkspace/xcuserdata/
+.DS_Store
+node_modules/
+dist/
+release/windows/
+*.log
+workbench-*.png
+.smoke-user-data*/
+.tools/

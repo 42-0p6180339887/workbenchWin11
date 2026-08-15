@@ -1,0 +1,97 @@
+{
+  "name": "workbench-windows",
+  "version": "2.0.0",
+  "description": "面向 Windows 的 Codex 本地可视化工作台",
+  "main": "dist/main/index.js",
+  "author": "Workbench contributors",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "build:main": "tsc -p tsconfig.main.json",
+    "build:renderer": "vite build",
+    "build": "npm run clean && npm run build:main && npm run build:renderer",
+    "clean": "node scripts/clean.mjs",
+    "dev": "concurrently -k \"vite --host 127.0.0.1\" \"wait-on http://127.0.0.1:5173 && cross-env VITE_DEV_SERVER_URL=http://127.0.0.1:5173 electron .\"",
+    "start": "npm run build && electron .",
+    "typecheck": "tsc -p tsconfig.main.json --noEmit && tsc -p tsconfig.renderer.json --noEmit",
+    "test": "vitest run --config vitest.config.ts",
+    "checksums": "node scripts/checksums.mjs",
+    "dist:win": "npm run build && electron-builder --win nsis portable",
+    "dist:dir": "npm run build && electron-builder --win dir"
+  },
+  "dependencies": {
+    "lucide-react": "^0.468.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@openai/codex": "0.147.0",
+    "@types/node": "^22.10.2",
+    "@types/react": "^19.0.2",
+    "@types/react-dom": "^19.0.2",
+    "@vitejs/plugin-react": "^4.3.4",
+    "concurrently": "^9.1.0",
+    "cross-env": "^7.0.3",
+    "electron": "^34.0.0",
+    "electron-builder": "^25.1.8",
+    "typescript": "^5.7.2",
+    "vite": "^6.0.6",
+    "vitest": "^2.1.8",
+    "wait-on": "^8.0.1"
+  },
+  "build": {
+    "appId": "dev.skilllens.workbench.windows",
+    "productName": "Workbench",
+    "copyright": "Copyright © 2026 Workbench contributors",
+    "asar": true,
+    "directories": {
+      "output": "release/windows"
+    },
+    "files": [
+      "dist/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "docs/branding/workbench-icon-master.png",
+        "to": "workbench-icon.png"
+      },
+      {
+        "from": "node_modules/@openai/codex-win32-x64/vendor/x86_64-pc-windows-msvc",
+        "to": "codex",
+        "filter": [
+          "**/*"
+        ]
+      }
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "docs/branding/workbench-icon-master.png"
+    },
+    "nsis": {
+      "artifactName": "Workbench-Windows-Setup-${version}-${arch}.${ext}",
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Workbench",
+      "deleteAppDataOnUninstall": false
+    },
+    "portable": {
+      "artifactName": "Workbench-Windows-Portable-${version}-${arch}.${ext}"
+    }
+  }
+}
