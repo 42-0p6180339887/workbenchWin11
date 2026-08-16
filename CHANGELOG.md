@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.0.1 - 2026-08-16
+
+- 规范化 Codex Home 的真实路径，修复 Windows 临时目录使用别名或短路径时 Memory 扫描被安全检查误判的问题。
+- 将 macOS CI 使用的 XcodeGen 固定版本更新到 2.46.0，并补充跨平台路径别名回归测试。
+
 ## 2.0.0 - 2026-08-15
 
 - 为 Windows 10/11 重新实现 Electron、React 与 TypeScript 桌面应用，同时保留上游 macOS 源码作为行为参照。

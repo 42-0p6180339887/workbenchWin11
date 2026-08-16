@@ -1,4 +1,4 @@
-import { mkdir, mkdtemp, rm, utimes, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, rm, symlink, utimes, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -32,6 +32,20 @@ describe("local Codex data", () => {
     expect(result.visibleRecords[0].lineCount).toBe(4);
     expect(result.visibleRecords[0].preview).toContain("[敏感内容已隐藏]");
     expect(result.visibleRecords[0].preview).not.toContain("sk-1234567890abcdef");
+  });
+
+  it("accepts a Codex Home path that resolves through an alias", async () => {
+    const root = await testRoot();
+    const realHome = path.join(root, "real-home");
+    const memoryRoot = path.join(realHome, "memories");
+    const homeAlias = path.join(root, "home-alias");
+    await mkdir(memoryRoot, { recursive: true });
+    await writeFile(path.join(memoryRoot, "MEMORY.md"), "# Canonical path\n", "utf8");
+    await symlink(realHome, homeAlias, process.platform === "win32" ? "junction" : "dir");
+
+    const result = await scanMemory(homeAlias);
+    expect(result.visibleRecords).toHaveLength(1);
+    expect(result.visibleRecords[0].relativePath).toBe("MEMORY.md");
   });
 
   it("marks only old temporary files as reclaimable", async () => {

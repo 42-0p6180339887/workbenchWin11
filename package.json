@@ -1,6 +1,6 @@
 {
   "name": "workbench-windows",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "面向 Windows 的 Codex 本地可视化工作台",
   "main": "dist/main/index.js",
   "author": "Workbench contributors",

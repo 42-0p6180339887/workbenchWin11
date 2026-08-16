@@ -8,13 +8,22 @@ const maximumFileBytes = 512 * 1024;
 const maximumPreviewBytes = 8 * 1024;
 
 export async function scanMemory(codexHome: string): Promise<MemorySnapshot> {
-  const rootCandidate = path.join(codexHome, "memories");
   const warnings: string[] = [];
+  let home: string;
+  try {
+    home = await realpath(codexHome);
+    const stat = await lstat(home);
+    if (!stat.isDirectory() || stat.isSymbolicLink()) throw new Error();
+  } catch {
+    return { records: [], visibleRecords: [], warnings: ["Codex Home 不存在或不是安全目录。"], totalBytes: 0 };
+  }
+
+  const rootCandidate = path.join(home, "memories");
   let root: string;
   try {
     root = await realpath(rootCandidate);
     const stat = await lstat(root);
-    if (!stat.isDirectory() || stat.isSymbolicLink() || !isInside(root, codexHome)) throw new Error();
+    if (!stat.isDirectory() || stat.isSymbolicLink() || !isInside(root, home)) throw new Error();
   } catch {
     return { records: [], visibleRecords: [], warnings: ["Codex memories 目录不存在或不是安全目录。"], totalBytes: 0 };
   }
