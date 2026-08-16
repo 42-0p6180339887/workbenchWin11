@@ -51,10 +51,10 @@ function createWindow(): void {
     minWidth: 1040,
     minHeight: 680,
     show: false,
-    backgroundColor: "#edf2f6",
+    backgroundColor: "#eef1f2",
     icon: iconPath,
     titleBarStyle: "hidden",
-    titleBarOverlay: { color: "#e7edf2", symbolColor: "#24313d", height: 44 },
+    titleBarOverlay: { color: "#e6eaec", symbolColor: "#202428", height: 38 },
     webPreferences: {
       preload: path.join(__dirname, "..", "preload", "index.js"),
       contextIsolation: true,
@@ -96,6 +96,13 @@ function showMainWindow(): void {
 function updateTray(): void {
   const settings = controller.snapshot.settings;
   nativeTheme.themeSource = settings.theme;
+  const dark = settings.theme === "dark" || (settings.theme === "system" && nativeTheme.shouldUseDarkColors);
+  mainWindow?.setTitleBarOverlay({
+    color: dark ? "#202224" : "#e6eaec",
+    symbolColor: dark ? "#f1f1f2" : "#202428",
+    height: 38,
+  });
+  mainWindow?.setBackgroundColor(dark ? "#1b1d1e" : "#eef1f2");
   if (!settings.showTrayIcon) {
     tray?.destroy();
     tray = undefined;

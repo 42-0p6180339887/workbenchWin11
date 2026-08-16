@@ -32,8 +32,8 @@ Workbench for Windows 是对 [fslot2601-source/workbench](https://github.com/fsl
 
 在仓库的 [Actions](https://github.com/42-0p6180339887/workbenchWin11/actions/workflows/windows-release.yml) 或 Releases 页面下载：
 
-- `Workbench-Windows-Setup-2.0.1-x64.exe`：图形化安装程序
-- `Workbench-Windows-Portable-2.0.1-x64.exe`：无需安装的便携版
+- `Workbench-Windows-Setup-2.1.0-x64.exe`：图形化安装程序
+- `Workbench-Windows-Portable-2.1.0-x64.exe`：无需安装的便携版
 
 当前社区构建没有商业代码签名证书，Windows SmartScreen 可能显示“未知发布者”。请只从本仓库下载，并核对旁边的 SHA-256 文件。
 
@@ -89,7 +89,7 @@ SkillLens/      上游 macOS SwiftUI 实现（保留作行为参照）
 
 ## 版本关系
 
-Windows 2.0.1 以原 macOS 1.3.0 的信息架构和安全原则为基线重新实现。Windows 与 macOS 构建不会共享设置文件或自动更新通道；两者都会读取当前用户的 Codex Home。
+Windows 2.1.0 以原 macOS 1.3.0 的信息架构、安全原则和视觉系统为基线重新实现。Windows 与 macOS 构建不会共享设置文件或自动更新通道；两者都会读取当前用户的 Codex Home。
 
 ## License
 

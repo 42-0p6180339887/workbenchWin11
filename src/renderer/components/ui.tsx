@@ -12,11 +12,10 @@ export function StatusIcon({ status }: { status: "passed" | "warning" | "failed"
   return <span className={`status-icon status-${status}`}><Icon size={16} className={status === "checking" ? "spin" : undefined} /></span>;
 }
 
-export function PageHeader({ eyebrow, title, description, actions }: { eyebrow?: string; title: string; description: string; actions?: ReactNode }) {
+export function PageHeader({ title, description, actions }: { eyebrow?: string; title: string; description: string; actions?: ReactNode }) {
   return (
     <header className="page-header">
       <div>
-        {eyebrow && <div className="eyebrow">{eyebrow}</div>}
         <h1>{title}</h1>
         <p>{description}</p>
       </div>

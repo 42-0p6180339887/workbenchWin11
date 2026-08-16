@@ -82,7 +82,7 @@ export function DashboardPage({ snapshot, actions }: { snapshot: WorkbenchSnapsh
   ].filter(Boolean) as Array<{ id: string; name: string; window: NonNullable<typeof limit.primary> }>).slice(0, 2);
 
   return <div className="page-scroll">
-    <PageHeader eyebrow="LOCAL CONTROL PLANE" title="Codex 总览" description="一页看清账号用量、扩展能力和本机占用；未知状态不会被写成正常。" />
+    <PageHeader eyebrow="LOCAL CONTROL PLANE" title="Codex 总览" description="用一页看清账号用量、扩展能力和本机占用。" actions={<Badge tone={snapshot.connection.status === "connected" ? "good" : snapshot.connection.status === "failed" ? "bad" : "info"} dot>{snapshot.connection.label}</Badge>} />
 
     <section className="section-stack">
       <div className="section-heading"><div><h2>最近使用量</h2><p>来自 Codex 官方账户接口，不从日志估算费用。</p></div><button className="link-button" onClick={() => actions.navigate("usage")}>查看详情</button></div>
