@@ -52,6 +52,8 @@ jobs:
           path: |
             release/windows/*.exe
             release/windows/*.sha256
+            release/windows/latest.yml
+            release/windows/*.blockmap
           if-no-files-found: error
 
       - name: Publish tagged release
@@ -60,5 +62,14 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "${{ github.ref_name }}" --repo "${{ github.repository }}" --generate-notes --title "Workbench ${{ github.ref_name }}"
-          gh release upload "${{ github.ref_name }}" release/windows/*.exe release/windows/*.sha256 --repo "${{ github.repository }}" --clobber
+          gh release view "${{ github.ref_name }}" --repo "${{ github.repository }}" *> $null
+          $createdDraft = $false
+          if ($LASTEXITCODE -ne 0) {
+            gh release create "${{ github.ref_name }}" --repo "${{ github.repository }}" --draft --generate-notes --title "Workbench ${{ github.ref_name }}"
+            $createdDraft = $true
+          }
+          $assets = Get-ChildItem release/windows -File | Where-Object { $_.Name -eq 'latest.yml' -or $_.Name -match '\.(exe|sha256|blockmap)$' } | ForEach-Object { $_.FullName }
+          gh release upload "${{ github.ref_name }}" $assets --repo "${{ github.repository }}" --clobber
+          if ($createdDraft) {
+            gh release edit "${{ github.ref_name }}" --repo "${{ github.repository }}" --draft=false
+          }

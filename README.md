@@ -22,6 +22,7 @@ Workbench for Windows 是对 [fslot2601-source/workbench](https://github.com/fsl
 - **GitHub 备份**：通过本机 GitHub CLI 将脱敏后的白名单配置备份到私人仓库。
 - **变更记录与系统自检**：保留本机操作历史，并明确显示无法验证的状态。
 - **Windows 集成**：原生标题栏按钮、系统深浅色、托盘菜单、安装包和便携版。
+- **软件内更新**：安装版可在“设置 → 软件更新”检查、下载并退出安装来自本仓库 GitHub Releases 的正式版本。
 
 ## 安装
 
@@ -32,10 +33,12 @@ Workbench for Windows 是对 [fslot2601-source/workbench](https://github.com/fsl
 
 在仓库的 [Actions](https://github.com/42-0p6180339887/workbenchWin11/actions/workflows/windows-release.yml) 或 Releases 页面下载：
 
-- `Workbench-Windows-Setup-2.1.0-x64.exe`：图形化安装程序
-- `Workbench-Windows-Portable-2.1.0-x64.exe`：无需安装的便携版
+- `Workbench-Windows-Setup-2.2.0-x64.exe`：图形化安装程序，支持后续软件内升级
+- `Workbench-Windows-Portable-2.2.0-x64.exe`：无需安装的便携版；更新时从 Releases 手动下载
 
 当前社区构建没有商业代码签名证书，Windows SmartScreen 可能显示“未知发布者”。请只从本仓库下载，并核对旁边的 SHA-256 文件。
+
+2.1.0 及更早版本没有内置更新器，需要手动安装一次 2.2.0。以后安装版可在软件内完成“检查更新 → 下载 → 退出并安装”。更新通道只读取本仓库公开的正式 Release；草稿和预发布版本不会推送给稳定版用户。
 
 首次启动默认使用当前 Windows 用户目录作为工作区；点击左下角的工作区卡片即可选择实际项目目录。
 
@@ -89,7 +92,7 @@ SkillLens/      上游 macOS SwiftUI 实现（保留作行为参照）
 
 ## 版本关系
 
-Windows 2.1.0 以原 macOS 1.3.0 的信息架构、安全原则和视觉系统为基线重新实现。Windows 与 macOS 构建不会共享设置文件或自动更新通道；两者都会读取当前用户的 Codex Home。
+Windows 2.2.0 以原 macOS 1.3.0 的信息架构、安全原则和视觉系统为基线重新实现。Windows 与 macOS 构建不会共享设置文件或自动更新通道；两者都会读取当前用户的 Codex Home。
 
 ## License
 

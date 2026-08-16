@@ -338,6 +338,13 @@ code, .mono { font-family: "Cascadia Mono", "SFMono-Regular", Consolas, monospac
 .settings-value { display: flex; align-items: center; gap: 10px; margin-top: 13px; padding-top: 13px; border-top: 1px solid var(--line); }.settings-value code { flex: 1; overflow: hidden; color: var(--muted); font-size: 10.5px; text-overflow: ellipsis; white-space: nowrap; user-select: text; }
 .settings-controls { margin-top: 12px; border-top: 1px solid var(--line); }.setting-row { min-height: 56px; display: flex; align-items: center; justify-content: space-between; gap: 16px; border-bottom: 1px solid var(--line); }.setting-row:last-child { border-bottom: 0; }.setting-row > span { display: flex; flex-direction: column; }.setting-row strong { font-size: 12.5px; }.setting-row small { margin-top: 3px; color: var(--muted); font-size: 10.5px; }.number-field { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: 11px; }.number-field input { width: 62px; height: 29px; padding: 0 7px; border: 1px solid var(--line); border-radius: 7px; background: var(--panel); color: var(--text); }
 .settings-save { display: flex; justify-content: flex-end; margin: 14px 0 24px; }
+.update-value { display: flex; align-items: center; justify-content: space-between; gap: 18px; margin-top: 13px; padding-top: 13px; border-top: 1px solid var(--line); }
+.update-copy { min-width: 0; flex: 1; }
+.update-copy > div:first-child { display: flex; align-items: center; gap: 8px; }
+.update-copy strong { font-size: 12.5px; }
+.update-copy > span { display: block; margin-top: 4px; color: var(--muted); font-size: 10.5px; line-height: 1.45; }
+.update-progress { max-width: 430px; display: grid; grid-template-columns: minmax(160px, 1fr) auto; align-items: center; gap: 9px; margin-top: 10px; }
+.update-progress small { color: var(--muted); font-size: 10px; white-space: nowrap; }
 .about-box { display: flex; align-items: center; gap: 13px; padding: 15px; border-top: 1px solid var(--line); }.about-box img { width: 48px; height: 48px; border-radius: 12px; }.about-box strong { font-size: 13px; }.about-box p { margin-top: 3px; color: var(--muted); font-size: 10.5px; line-height: 1.4; }
 
 .empty-state { min-height: 150px; display: flex; align-items: center; justify-content: center; flex-direction: column; padding: 25px; color: var(--faint); text-align: center; }

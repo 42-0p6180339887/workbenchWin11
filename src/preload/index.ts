@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from "electron";
-import type { SectionName, SkillMode, StorageKind, WorkbenchAPI, WorkbenchSettings, WorkbenchSnapshot } from "../shared/types";
+import type { SectionName, SkillMode, StorageKind, WorkbenchAPI, WorkbenchSettings, WorkbenchSnapshot, WorkbenchUpdateState } from "../shared/types";
 
 const api: WorkbenchAPI = {
   bootstrap: () => ipcRenderer.invoke("workbench:bootstrap"),
@@ -17,10 +17,19 @@ const api: WorkbenchAPI = {
   copyText: (text: string) => ipcRenderer.invoke("workbench:copyText", text),
   previewBackup: (repository: string) => ipcRenderer.invoke("workbench:previewBackup", repository),
   runBackup: (repository: string) => ipcRenderer.invoke("workbench:runBackup", repository),
+  getUpdateState: () => ipcRenderer.invoke("workbench:getUpdateState"),
+  checkForUpdates: () => ipcRenderer.invoke("workbench:checkForUpdates"),
+  downloadUpdate: () => ipcRenderer.invoke("workbench:downloadUpdate"),
+  installUpdate: () => ipcRenderer.invoke("workbench:installUpdate"),
   onSnapshot: (listener: (snapshot: WorkbenchSnapshot) => void) => {
     const handler = (_event: Electron.IpcRendererEvent, snapshot: WorkbenchSnapshot) => listener(snapshot);
     ipcRenderer.on("workbench:snapshot", handler);
     return () => ipcRenderer.removeListener("workbench:snapshot", handler);
+  },
+  onUpdateState: (listener: (state: WorkbenchUpdateState) => void) => {
+    const handler = (_event: Electron.IpcRendererEvent, state: WorkbenchUpdateState) => listener(state);
+    ipcRenderer.on("workbench:updateState", handler);
+    return () => ipcRenderer.removeListener("workbench:updateState", handler);
   },
 };
 

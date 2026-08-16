@@ -8,6 +8,7 @@ import {
   Clipboard,
   Clock3,
   Database,
+  Download,
   FolderOpen,
   Gauge,
   Github,
@@ -39,6 +40,7 @@ import type {
   StorageRecord,
   WorkbenchSettings,
   WorkbenchSnapshot,
+  WorkbenchUpdateState,
 } from "../../shared/types";
 import {
   Badge,
@@ -254,9 +256,84 @@ export function DiagnosticsPage({ snapshot, actions }: { snapshot: WorkbenchSnap
 
 export function SettingsPage({ snapshot, actions }: { snapshot: WorkbenchSnapshot; actions: PageActions }) {
   const [draft, setDraft] = useState<WorkbenchSettings>(snapshot.settings);
+  const [update, setUpdate] = useState<WorkbenchUpdateState | null>(null);
+  const [updateBusy, setUpdateBusy] = useState(false);
   useEffect(() => setDraft(snapshot.settings), [snapshot.settings]);
+  useEffect(() => {
+    let disposed = false;
+    void window.workbench.getUpdateState().then((state) => { if (!disposed) setUpdate(state); });
+    const unsubscribe = window.workbench.onUpdateState((state) => { if (!disposed) setUpdate(state); });
+    return () => { disposed = true; unsubscribe(); };
+  }, []);
   function patch<K extends keyof WorkbenchSettings>(key: K, value: WorkbenchSettings[K]) { setDraft((current) => ({ ...current, [key]: value })); }
-  return <div className="page-scroll settings-page"><PageHeader eyebrow="WINDOWS PREFERENCES" title="设置" description="管理本地路径、刷新节奏和窗口外观；登录凭据不由 Workbench 保存。" /><section className="settings-group card"><div><span className="settings-icon"><FolderOpen size={20} /></span><div><h2>工作区</h2><p>项目级 Skills、Hooks 和 MCP 以此目录解析。</p></div></div><div className="settings-value"><code>{snapshot.workspacePath}</code><button className="secondary-button" onClick={actions.chooseWorkspace}>选择文件夹</button></div></section><section className="settings-group card"><div><span className="settings-icon"><TerminalSquare size={20} /></span><div><h2>Codex 可执行文件</h2><p>自动发现失败时手动选择 codex.exe。</p></div></div><div className="settings-value"><code>{snapshot.codexExecutable ?? "尚未找到"}</code><button className="secondary-button" onClick={actions.chooseCodex}>选择 codex.exe</button></div></section><section className="settings-group card"><div><span className="settings-icon"><Settings2 size={20} /></span><div><h2>界面与刷新</h2><p>遵循 Windows 主题，并按设定周期更新账户用量。</p></div></div><div className="settings-controls"><div className="setting-row"><span><strong>主题</strong><small>系统、浅色或深色</small></span><Segmented value={draft.theme} options={[{ value: "system", label: "跟随系统" }, { value: "light", label: "浅色" }, { value: "dark", label: "深色" }]} onChange={(value) => patch("theme", value)} /></div><div className="setting-row"><span><strong>托盘图标</strong><small>关闭窗口时继续驻留</small></span><Toggle checked={draft.showTrayIcon} label="显示托盘图标" onChange={(value) => patch("showTrayIcon", value)} /></div><div className="setting-row"><span><strong>用量刷新</strong><small>1 到 60 分钟</small></span><label className="number-field"><input type="number" min={1} max={60} value={draft.autoRefreshMinutes} onChange={(event) => patch("autoRefreshMinutes", Number(event.target.value))} />分钟</label></div></div></section><div className="settings-save"><button className="primary-button" disabled={actions.busy === "settings:save"} onClick={() => actions.run("settings:save", () => window.workbench.saveSettings(draft))}>保存设置</button></div><section className="about-box"><img src="../../../docs/branding/workbench-icon-master.png" alt="" onError={(event) => { (event.currentTarget as HTMLImageElement).style.display = "none"; }} /><div><strong>Workbench for Windows</strong><p>基于原 macOS 开源项目重构。MIT License，与 OpenAI 无隶属或官方授权关系。</p><button className="link-button" onClick={() => actions.run("open:github", () => window.workbench.openExternal("https://github.com/42-0p6180339887/workbenchWin11"))}>查看 GitHub <ArrowUpRight size={13} /></button></div></section></div>;
+  async function handleUpdate(): Promise<void> {
+    if (!update) return;
+    if (update.distribution !== "installed") {
+      await actions.run("update:releases", () => window.workbench.openExternal(update.releaseUrl));
+      return;
+    }
+    setUpdateBusy(true);
+    try {
+      const next = update.status === "available"
+        ? await window.workbench.downloadUpdate()
+        : update.status === "downloaded"
+          ? await window.workbench.installUpdate()
+          : await window.workbench.checkForUpdates();
+      setUpdate(next);
+      if (next.status === "error") actions.notify(next.message, "bad");
+    } catch (error) {
+      actions.notify(error instanceof Error ? error.message : "更新操作没有完成。", "bad");
+    } finally {
+      setUpdateBusy(false);
+    }
+  }
+  const updateLabel = !update
+    ? "正在读取"
+    : update.distribution !== "installed"
+      ? "打开下载页"
+      : update.status === "available"
+        ? `下载 ${update.availableVersion ?? "新版本"}`
+        : update.status === "downloaded"
+          ? "退出并安装"
+          : ["checking", "downloading", "installing"].includes(update.status)
+            ? update.status === "checking" ? "正在检查" : update.status === "downloading" ? "正在下载" : "正在安装"
+            : update.status === "error" ? "重新检查" : "检查更新";
+  const distributionTitle = update?.distribution === "installed" ? "安装版" : update?.distribution === "portable" ? "便携版" : "开发版";
+  const updateTone: Tone = update?.status === "error" ? "bad" : update?.status === "available" ? "info" : update?.status === "downloaded" ? "good" : "neutral";
+  return <div className="page-scroll settings-page">
+    <PageHeader eyebrow="WINDOWS PREFERENCES" title="设置" description="管理本地路径、刷新节奏和窗口外观；登录凭据不由 Workbench 保存。" />
+    <section className="settings-group card">
+      <div><span className="settings-icon"><FolderOpen size={20} /></span><div><h2>工作区</h2><p>项目级 Skills、Hooks 和 MCP 以此目录解析。</p></div></div>
+      <div className="settings-value"><code>{snapshot.workspacePath}</code><button className="secondary-button" onClick={actions.chooseWorkspace}>选择文件夹</button></div>
+    </section>
+    <section className="settings-group card">
+      <div><span className="settings-icon"><TerminalSquare size={20} /></span><div><h2>Codex 可执行文件</h2><p>自动发现失败时手动选择 codex.exe。</p></div></div>
+      <div className="settings-value"><code>{snapshot.codexExecutable ?? "尚未找到"}</code><button className="secondary-button" onClick={actions.chooseCodex}>选择 codex.exe</button></div>
+    </section>
+    <section className="settings-group card">
+      <div><span className="settings-icon"><Settings2 size={20} /></span><div><h2>界面与刷新</h2><p>遵循 Windows 主题，并按设定周期更新账户用量。</p></div></div>
+      <div className="settings-controls">
+        <div className="setting-row"><span><strong>主题</strong><small>系统、浅色或深色</small></span><Segmented value={draft.theme} options={[{ value: "system", label: "跟随系统" }, { value: "light", label: "浅色" }, { value: "dark", label: "深色" }]} onChange={(value) => patch("theme", value)} /></div>
+        <div className="setting-row"><span><strong>托盘图标</strong><small>关闭窗口时继续驻留</small></span><Toggle checked={draft.showTrayIcon} label="显示托盘图标" onChange={(value) => patch("showTrayIcon", value)} /></div>
+        <div className="setting-row"><span><strong>用量刷新</strong><small>1 到 60 分钟</small></span><label className="number-field"><input type="number" min={1} max={60} value={draft.autoRefreshMinutes} onChange={(event) => patch("autoRefreshMinutes", Number(event.target.value))} />分钟</label></div>
+      </div>
+    </section>
+    <div className="settings-save"><button className="primary-button" disabled={actions.busy === "settings:save"} onClick={() => actions.run("settings:save", () => window.workbench.saveSettings(draft))}>保存设置</button></div>
+    <section className="settings-group card">
+      <div><span className="settings-icon"><Download size={20} /></span><div><h2>软件更新</h2><p>安装版通过 GitHub Releases 获取正式版本；不会读取或保存 GitHub 凭据。</p></div></div>
+      <div className="update-value">
+        <div className="update-copy">
+          <div><strong>Workbench {update?.currentVersion ?? "—"}</strong><Badge tone={updateTone}>{distributionTitle}</Badge></div>
+          <span>{update?.message ?? "正在读取更新状态…"}</span>
+          {update?.status === "downloading" && <div className="update-progress"><ProgressBar value={update.progressPercent ?? 0} tone="info" /><small>{Math.round(update.progressPercent ?? 0)}%{update.totalBytes ? ` · ${formatBytes(update.transferredBytes ?? 0)} / ${formatBytes(update.totalBytes)}` : ""}</small></div>}
+        </div>
+        <button className={update?.status === "downloaded" ? "primary-button" : "secondary-button"} disabled={!update || updateBusy || ["checking", "downloading", "installing"].includes(update.status)} onClick={handleUpdate}>
+          {updateBusy || ["checking", "downloading", "installing"].includes(update?.status ?? "") ? <RefreshCw className="spin" size={15} /> : update?.distribution !== "installed" ? <ArrowUpRight size={15} /> : <Download size={15} />}{updateLabel}
+        </button>
+      </div>
+    </section>
+    <section className="about-box"><img src="../../../docs/branding/workbench-icon-master.png" alt="" onError={(event) => { (event.currentTarget as HTMLImageElement).style.display = "none"; }} /><div><strong>Workbench for Windows</strong><p>基于原 macOS 开源项目重构。MIT License，与 OpenAI 无隶属或官方授权关系。</p><button className="link-button" onClick={() => actions.run("open:github", () => window.workbench.openExternal("https://github.com/42-0p6180339887/workbenchWin11"))}>查看 GitHub <ArrowUpRight size={13} /></button></div></section>
+  </div>;
 }
 
 function skillTone(skill: SkillRecord): Tone { return skill.state === "available" ? "good" : skill.state === "disabled" ? "neutral" : "bad"; }

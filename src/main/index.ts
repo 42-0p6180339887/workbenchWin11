@@ -1,8 +1,9 @@
 import { app, BrowserWindow, clipboard, dialog, ipcMain, Menu, nativeImage, nativeTheme, shell, Tray } from "electron";
 import path from "node:path";
 import { lstat, writeFile } from "node:fs/promises";
-import type { ActionResult, SectionName, SkillMode, StorageKind, WorkbenchSettings } from "../shared/types";
+import type { ActionResult, SectionName, SkillMode, StorageKind, WorkbenchSettings, WorkbenchUpdateState } from "../shared/types";
 import { isInside } from "./security";
+import { WorkbenchUpdateService } from "./update-service";
 import { WorkbenchController } from "./workbench-controller";
 
 let mainWindow: BrowserWindow | undefined;
@@ -10,6 +11,7 @@ let tray: Tray | undefined;
 let refreshTimer: NodeJS.Timeout | undefined;
 let lastAutomaticRefresh = 0;
 let quitting = false;
+let updateService: WorkbenchUpdateService | undefined;
 
 process.env.WORKBENCH_BUNDLED_CODEX = app.isPackaged
   ? path.join(process.resourcesPath, "codex", "bin", "codex.exe")
@@ -25,6 +27,9 @@ if (!app.requestSingleInstanceLock()) {
 
 app.whenReady().then(async () => {
   createWindow();
+  updateService = new WorkbenchUpdateService((state) => {
+    if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send("workbench:updateState", state);
+  });
   installApplicationMenu();
   registerIpc();
   startRefreshTimer();
@@ -130,6 +135,14 @@ function installApplicationMenu(): void {
       label: "Workbench",
       submenu: [
         { label: "刷新全部状态", accelerator: "F5", click: () => void controller.refresh() },
+        {
+          label: "检查更新…",
+          enabled: updateService?.snapshot.distribution === "installed",
+          click: () => {
+            showMainWindow();
+            void updateService?.checkForUpdates();
+          },
+        },
         { type: "separator" },
         { role: "quit", label: "退出" },
       ],
@@ -192,6 +205,29 @@ function registerIpc(): void {
   }));
   ipcMain.handle("workbench:previewBackup", (_event, repository: string) => controller.previewBackup(String(repository)));
   ipcMain.handle("workbench:runBackup", (_event, repository: string) => action(() => controller.runBackup(String(repository))));
+  ipcMain.handle("workbench:getUpdateState", () => currentUpdateState());
+  ipcMain.handle("workbench:checkForUpdates", () => updateService?.checkForUpdates() ?? currentUpdateState());
+  ipcMain.handle("workbench:downloadUpdate", () => updateService?.downloadUpdate() ?? currentUpdateState());
+  ipcMain.handle("workbench:installUpdate", () => {
+    const readyToInstall = updateService?.snapshot.canInstall === true;
+    if (readyToInstall) quitting = true;
+    const state = updateService?.installUpdate() ?? currentUpdateState();
+    if (state.status === "error") quitting = false;
+    return state;
+  });
+}
+
+function currentUpdateState(): WorkbenchUpdateState {
+  return updateService?.snapshot ?? {
+    status: "unsupported",
+    distribution: "development",
+    currentVersion: app.getVersion(),
+    message: "更新服务尚未就绪。",
+    releaseUrl: "https://github.com/42-0p6180339887/workbenchWin11/releases/latest",
+    canCheck: false,
+    canDownload: false,
+    canInstall: false,
+  };
 }
 
 async function action(task: () => Promise<ActionResult>): Promise<ActionResult> {
