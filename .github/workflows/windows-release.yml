@@ -1,0 +1,75 @@
+name: Windows build
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, "windows/**"]
+    tags: ["v*"]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-2022
+    timeout-minutes: 35
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Test
+        run: npm test
+
+      - name: Verify Codex App Server
+        shell: pwsh
+        run: |
+          npm run build
+          node scripts/probe-codex.cjs
+
+      - name: Build Windows executables
+        run: npm run dist:win
+
+      - name: Create checksums
+        run: npm run checksums
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Workbench-Windows-${{ github.sha }}
+          path: |
+            release/windows/*.exe
+            release/windows/*.sha256
+            release/windows/latest.yml
+            release/windows/*.blockmap
+          if-no-files-found: error
+
+      - name: Publish tagged release
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view "${{ github.ref_name }}" --repo "${{ github.repository }}" *> $null
+          $createdDraft = $false
+          if ($LASTEXITCODE -ne 0) {
+            gh release create "${{ github.ref_name }}" --repo "${{ github.repository }}" --draft --generate-notes --title "Workbench ${{ github.ref_name }}"
+            $createdDraft = $true
+          }
+          $assets = Get-ChildItem release/windows -File | Where-Object { $_.Name -eq 'latest.yml' -or $_.Name -match '\.(exe|sha256|blockmap)$' } | ForEach-Object { $_.FullName }
+          gh release upload "${{ github.ref_name }}" $assets --repo "${{ github.repository }}" --clobber
+          if ($createdDraft) {
+            gh release edit "${{ github.ref_name }}" --repo "${{ github.repository }}" --draft=false
+          }

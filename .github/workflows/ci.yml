@@ -1,7 +1,7 @@
 name: CI
 
 env:
-  XCODEGEN_VERSION: "2.45.4"
+  XCODEGEN_VERSION: "2.46.0"
 
 on:
   push:
