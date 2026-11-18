@@ -19,8 +19,6 @@ const api: WorkbenchAPI = {
   runBackup: (repository: string) => ipcRenderer.invoke("workbench:runBackup", repository),
   getUpdateState: () => ipcRenderer.invoke("workbench:getUpdateState"),
   checkForUpdates: () => ipcRenderer.invoke("workbench:checkForUpdates"),
-  downloadUpdate: () => ipcRenderer.invoke("workbench:downloadUpdate"),
-  installUpdate: () => ipcRenderer.invoke("workbench:installUpdate"),
   onSnapshot: (listener: (snapshot: WorkbenchSnapshot) => void) => {
     const handler = (_event: Electron.IpcRendererEvent, snapshot: WorkbenchSnapshot) => listener(snapshot);
     ipcRenderer.on("workbench:snapshot", handler);

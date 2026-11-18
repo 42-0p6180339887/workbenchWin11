@@ -49,6 +49,7 @@ jobs:
       - name: Build unsigned release artifacts
         run: ./scripts/build-release.sh
       - name: Upload smoke artifacts
+        if: github.event.repository.private
         uses: actions/upload-artifact@v4
         with:
           name: Workbench-unsigned-smoke

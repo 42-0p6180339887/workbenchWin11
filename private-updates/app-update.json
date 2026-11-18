@@ -1,0 +1,7 @@
+{
+  "appId": "workbench-win11",
+  "versionCode": 221,
+  "versionName": "2.2.1",
+  "title": "Workbench",
+  "installInstructions": "保存正在进行的工作，在托盘菜单选择退出 Workbench。安装版运行已校验的 Setup 覆盖安装。便携版若需继续便携使用，请从同一私有发布页取得对应 Portable 文件并核对 SHA-256。"
+}

@@ -1,5 +1,6 @@
 import { app, BrowserWindow, clipboard, dialog, ipcMain, Menu, nativeImage, nativeTheme, shell, Tray } from "electron";
 import path from "node:path";
+import { pathToFileURL } from "node:url";
 import { lstat, writeFile } from "node:fs/promises";
 import type { ActionResult, SectionName, SkillMode, StorageKind, WorkbenchSettings, WorkbenchUpdateState } from "../shared/types";
 import { isInside } from "./security";
@@ -137,7 +138,7 @@ function installApplicationMenu(): void {
         { label: "刷新全部状态", accelerator: "F5", click: () => void controller.refresh() },
         {
           label: "检查更新…",
-          enabled: updateService?.snapshot.distribution === "installed",
+          enabled: updateService?.snapshot.canCheck,
           click: () => {
             showMainWindow();
             void updateService?.checkForUpdates();
@@ -206,14 +207,17 @@ function registerIpc(): void {
   ipcMain.handle("workbench:previewBackup", (_event, repository: string) => controller.previewBackup(String(repository)));
   ipcMain.handle("workbench:runBackup", (_event, repository: string) => action(() => controller.runBackup(String(repository))));
   ipcMain.handle("workbench:getUpdateState", () => currentUpdateState());
-  ipcMain.handle("workbench:checkForUpdates", () => updateService?.checkForUpdates() ?? currentUpdateState());
-  ipcMain.handle("workbench:downloadUpdate", () => updateService?.downloadUpdate() ?? currentUpdateState());
-  ipcMain.handle("workbench:installUpdate", () => {
-    const readyToInstall = updateService?.snapshot.canInstall === true;
-    if (readyToInstall) quitting = true;
-    const state = updateService?.installUpdate() ?? currentUpdateState();
-    if (state.status === "error") quitting = false;
-    return state;
+  ipcMain.handle("workbench:checkForUpdates", (event) => {
+    const frame = event.senderFrame;
+    if (!mainWindow || event.sender !== mainWindow.webContents || frame !== mainWindow.webContents.mainFrame || !frame) {
+      return currentUpdateState();
+    }
+    const url = new URL(frame.url);
+    url.hash = "";
+    url.search = "";
+    const expected = pathToFileURL(path.join(__dirname, "..", "renderer", "index.html"));
+    if (url.href !== expected.href) return currentUpdateState();
+    return updateService?.checkForUpdates() ?? currentUpdateState();
   });
 }
 
@@ -223,10 +227,7 @@ function currentUpdateState(): WorkbenchUpdateState {
     distribution: "development",
     currentVersion: app.getVersion(),
     message: "更新服务尚未就绪。",
-    releaseUrl: "https://github.com/42-0p6180339887/workbenchWin11/releases/latest",
     canCheck: false,
-    canDownload: false,
-    canInstall: false,
   };
 }
 

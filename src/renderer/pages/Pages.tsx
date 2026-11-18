@@ -267,39 +267,20 @@ export function SettingsPage({ snapshot, actions }: { snapshot: WorkbenchSnapsho
   }, []);
   function patch<K extends keyof WorkbenchSettings>(key: K, value: WorkbenchSettings[K]) { setDraft((current) => ({ ...current, [key]: value })); }
   async function handleUpdate(): Promise<void> {
-    if (!update) return;
-    if (update.distribution !== "installed") {
-      await actions.run("update:releases", () => window.workbench.openExternal(update.releaseUrl));
-      return;
-    }
+    if (!update?.canCheck) return;
     setUpdateBusy(true);
     try {
-      const next = update.status === "available"
-        ? await window.workbench.downloadUpdate()
-        : update.status === "downloaded"
-          ? await window.workbench.installUpdate()
-          : await window.workbench.checkForUpdates();
+      const next = await window.workbench.checkForUpdates();
       setUpdate(next);
       if (next.status === "error") actions.notify(next.message, "bad");
     } catch (error) {
-      actions.notify(error instanceof Error ? error.message : "更新操作没有完成。", "bad");
+      actions.notify(error instanceof Error ? error.message : "更新窗口未能打开。", "bad");
     } finally {
       setUpdateBusy(false);
     }
   }
-  const updateLabel = !update
-    ? "正在读取"
-    : update.distribution !== "installed"
-      ? "打开下载页"
-      : update.status === "available"
-        ? `下载 ${update.availableVersion ?? "新版本"}`
-        : update.status === "downloaded"
-          ? "退出并安装"
-          : ["checking", "downloading", "installing"].includes(update.status)
-            ? update.status === "checking" ? "正在检查" : update.status === "downloading" ? "正在下载" : "正在安装"
-            : update.status === "error" ? "重新检查" : "检查更新";
   const distributionTitle = update?.distribution === "installed" ? "安装版" : update?.distribution === "portable" ? "便携版" : "开发版";
-  const updateTone: Tone = update?.status === "error" ? "bad" : update?.status === "available" ? "info" : update?.status === "downloaded" ? "good" : "neutral";
+  const updateTone: Tone = update?.status === "error" ? "bad" : "neutral";
   return <div className="page-scroll settings-page">
     <PageHeader eyebrow="WINDOWS PREFERENCES" title="设置" description="管理本地路径、刷新节奏和窗口外观；登录凭据不由 Workbench 保存。" />
     <section className="settings-group card">
@@ -320,15 +301,14 @@ export function SettingsPage({ snapshot, actions }: { snapshot: WorkbenchSnapsho
     </section>
     <div className="settings-save"><button className="primary-button" disabled={actions.busy === "settings:save"} onClick={() => actions.run("settings:save", () => window.workbench.saveSettings(draft))}>保存设置</button></div>
     <section className="settings-group card">
-      <div><span className="settings-icon"><Download size={20} /></span><div><h2>软件更新</h2><p>安装版通过 GitHub Releases 获取正式版本；不会读取或保存 GitHub 凭据。</p></div></div>
+      <div><span className="settings-icon"><Download size={20} /></span><div><h2>软件更新</h2><p>打开更新窗口，授权访问 GitHub 私有发布频道。</p></div></div>
       <div className="update-value">
         <div className="update-copy">
           <div><strong>Workbench {update?.currentVersion ?? "—"}</strong><Badge tone={updateTone}>{distributionTitle}</Badge></div>
           <span>{update?.message ?? "正在读取更新状态…"}</span>
-          {update?.status === "downloading" && <div className="update-progress"><ProgressBar value={update.progressPercent ?? 0} tone="info" /><small>{Math.round(update.progressPercent ?? 0)}%{update.totalBytes ? ` · ${formatBytes(update.transferredBytes ?? 0)} / ${formatBytes(update.totalBytes)}` : ""}</small></div>}
         </div>
-        <button className={update?.status === "downloaded" ? "primary-button" : "secondary-button"} disabled={!update || updateBusy || ["checking", "downloading", "installing"].includes(update.status)} onClick={handleUpdate}>
-          {updateBusy || ["checking", "downloading", "installing"].includes(update?.status ?? "") ? <RefreshCw className="spin" size={15} /> : update?.distribution !== "installed" ? <ArrowUpRight size={15} /> : <Download size={15} />}{updateLabel}
+        <button className="secondary-button" disabled={!update?.canCheck || updateBusy} onClick={handleUpdate}>
+          {updateBusy ? <RefreshCw className="spin" size={15} /> : <Download size={15} />}检查更新
         </button>
       </div>
     </section>

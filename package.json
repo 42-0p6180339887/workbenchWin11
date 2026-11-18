@@ -1,6 +1,6 @@
 {
   "name": "workbench-windows",
-  "version": "2.2.0",
+  "version": "2.2.1",
   "description": "面向 Windows 的 Codex 本地可视化工作台",
   "main": "dist/main/index.js",
   "author": "Workbench contributors",
@@ -20,7 +20,6 @@
     "dist:dir": "npm run build && electron-builder --win dir"
   },
   "dependencies": {
-    "electron-updater": "6.8.9",
     "lucide-react": "^0.468.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
@@ -63,16 +62,13 @@
         "filter": [
           "**/*"
         ]
+      },
+      {
+        "from": "private-updates",
+        "to": "private-updates"
       }
     ],
     "win": {
-      "publish": {
-        "provider": "github",
-        "owner": "42-0p6180339887",
-        "repo": "workbenchWin11",
-        "releaseType": "release"
-      },
-      "electronUpdaterCompatibility": ">= 2.16",
       "target": [
         {
           "target": "nsis",

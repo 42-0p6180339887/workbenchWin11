@@ -260,31 +260,14 @@ export interface ActionResult {
 }
 
 export type UpdateDistribution = "installed" | "portable" | "development";
-export type UpdateStatus =
-  | "unsupported"
-  | "idle"
-  | "checking"
-  | "available"
-  | "notAvailable"
-  | "downloading"
-  | "downloaded"
-  | "installing"
-  | "error";
+export type UpdateStatus = "unsupported" | "idle" | "error";
 
 export interface WorkbenchUpdateState {
   status: UpdateStatus;
   distribution: UpdateDistribution;
   currentVersion: string;
-  availableVersion?: string;
-  releaseDate?: string;
-  progressPercent?: number;
-  transferredBytes?: number;
-  totalBytes?: number;
   message: string;
-  releaseUrl: string;
   canCheck: boolean;
-  canDownload: boolean;
-  canInstall: boolean;
 }
 
 export interface BackupPreview {
@@ -311,8 +294,6 @@ export interface WorkbenchAPI {
   runBackup(repository: string): Promise<ActionResult>;
   getUpdateState(): Promise<WorkbenchUpdateState>;
   checkForUpdates(): Promise<WorkbenchUpdateState>;
-  downloadUpdate(): Promise<WorkbenchUpdateState>;
-  installUpdate(): Promise<WorkbenchUpdateState>;
   onSnapshot(listener: (snapshot: WorkbenchSnapshot) => void): () => void;
   onUpdateState(listener: (state: WorkbenchUpdateState) => void): () => void;
 }
